@@ -1,0 +1,12 @@
+All textures come from cc0textures.com with the following changes
+
+- *-color.ppm: Converted to ppm and resized to 512x512
+  - Used ImageMagick: "magick color.png -resize 512x512 color.ppm"
+- *-normal.ppm: For textures with only DX map, Green channel is inverted per OpenGL convention
+  - Used ImageMagick: "magick normal.png -channel G -negate -resize 512x512 normal.ppm"
+- *-props.ppm: Roughness, Displacement, and AmbientOcclusion maps packed into *-props.ppm
+  - Used ImageMagick: "magick rough.png disp.png ao.png -combine -resize 512x512 props.ppm"
+
+paving-*.ppm: https://cc0textures.com/view?id=PavingStones053
+rocks-*.ppm: https://cc0textures.com/view?id=Rocks023
+bark-*.ppm: https://cc0textures.com/view?id=Bark014
