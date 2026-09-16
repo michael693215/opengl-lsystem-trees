@@ -1,5 +1,5 @@
 # opengl-lsystem-trees
-An L-System modeling simulation written in C++ and OpenGL as part of the Spring 2026 Computer Graphics course taught by professor Marc Olano @ UMBC.
+An L-System modeling simulation written in C++ and OpenGL as part of the Spring 2026 Computer Graphics course taught by professor Marc Olano @ UMBC. (Examples are at the bottom of the page)
 
 ## Overview
 ### L-Systems
