@@ -11,11 +11,13 @@ struct Stem
 {
     // hardcoded dimensions of a tree primitive
     static constexpr float size[3] = {5.f, 5.f, 10.f};
-    static constexpr int width = 6;
-    static constexpr int height = 1;
+    static constexpr int pGranularity = 6; // smoothness of the xy cross-section of the stump
+    static constexpr int zGranularity = 1; // z axis layers
 
-    // create sphere given latitude and longitude sizes and color texture. offset is the vertices offset for composite objects
-    Stem(fMat4 _transform = translate<float>(0), int offset = 0);
+    // create sphere given latitude and longitude sizes and color texture. 
+    // Offset is the vertices offset for composite objects.
+    // Scale is the size of the tree, first along the xy plane, then along the z axis.
+    Stem(fMat4 _transform = translate<float>(0), int offset = 0, fVec2 scale = {1.f, 1.f});
     const std::vector<fVec3>& getVertices() const { return vert; }
     const std::vector<fVec3>& getNorm() const { return norm; }
     const std::vector<fVec2>& getTextures() const { return uv; }

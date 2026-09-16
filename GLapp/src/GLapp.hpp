@@ -24,7 +24,7 @@ public:
     int width, height;          // current window dimensions
     float distance;             // distance from 0,0,0
     float pan, tilt;            // horizontal and vertical Euler angles
-    float panRate, tiltRate;    // keyboard orbiting rate in radians/sec
+    float panRate, tiltRate, zoomRate;    // keyboard orbiting rate in radians/sec
 
     // mouse state
     double mouseX, mouseY;      // location of mouse at last event
@@ -38,13 +38,20 @@ public:
     // objects to draw
     std::vector<class Object*> objects;
 
+    // tree data
+    size_t generations;
+    char *rule;
+
 public:
     // initialize and destroy app data
-    GLapp();
+    GLapp(char *_rule, size_t _generations);
     ~GLapp();
 
     // update shader uniform state each frame
     void sceneUpdate(double dTime);
+
+    // regenerate the tree (after changing generations)
+    void regenerateTree();
 
     // main rendering loop
     void render();

@@ -4,11 +4,17 @@
 
 
 #include "GLapp.hpp"
-#include "Sphere.hpp"
 #include "Plane.hpp"
 #include "Shader.hpp"
+#include"LSystem.hpp"
+#include "Tree.hpp"
 #include "Mat.inl"
 #include "Vec.inl"
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <cstring>
+#include <limits>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -99,6 +105,25 @@ extern "C" {
                 app->wireframe = !app->wireframe;
                 glPolygonMode(GL_FRONT_AND_BACK, app->wireframe ? GL_LINE : GL_FILL);
                 return;
+            
+            case 'O':
+                app->zoomRate = 30.f * F_PI;
+                return;
+
+            case 'P':
+                app->zoomRate = -30.f * F_PI;
+                return;
+            
+            case 'J':
+                app->generations++;
+                app->regenerateTree();
+                return;
+            
+            case 'K':
+                app->generations = std::max(app->generations - 1, static_cast<size_t>(1));
+                app->regenerateTree();
+                return;
+
 
             case GLFW_KEY_ESCAPE:                    // Escape
                 if (app->active) {                   //  1st press, release mouse
@@ -119,19 +144,22 @@ extern "C" {
             case 'W': case 'S':         // stop tilting
                 app->tiltRate = 0;
                 return;
+            case 'O': case 'P':         // stop zooming
+                app->zoomRate = 0;
+                return;
             }
         }
     }
 }
 
 // initialize GLFW - windows and interaction
-GLapp::GLapp()
+GLapp::GLapp(char *_rule, size_t _generations) : generations(_generations), rule(_rule)
 {
     // member data initialization
     active = false;                             // not tracking mouse input
     width = 843; height = 480;                  // window size
-    distance = 500.f; pan = 0.f; tilt = -1.4f;  // view
-    panRate = tiltRate = 0.f;                   // keyboard view control
+    distance = 600.f; pan = 0.f; tilt = -1.4f;  // view
+    panRate = tiltRate = zoomRate = 0.f;                   // keyboard view control
     mouseX = mouseY = 0.f;                      // mouse view controls
     wireframe = false;                          // solid drawing
 
@@ -193,6 +221,10 @@ GLapp::GLapp()
 
     // initialize scene data
     scene.LightDir = fVec4{-1,-2,2,1};
+
+    // add tree
+    objects.push_back(new Plane(fVec3{500.f, 500.f, 100.f}, "rocks"));
+    objects.push_back(new Tree(rule, generations));
 }
 
 ///////
@@ -208,6 +240,7 @@ void GLapp::sceneUpdate(double dTime)
 {
     pan += float(panRate * dTime);
     tilt += float(tiltRate * dTime);
+    distance += float(zoomRate * dTime);
 
     scene.ProjFromWorld = 
         perspective<float>(F_PI/4.f, (float)width/height, 1.f, 10000.f)
@@ -241,14 +274,87 @@ void GLapp::render()
     prevTime = currTime;
 }
 
+void GLapp::regenerateTree()
+{
+    objects.clear();
+    objects.push_back(new Plane(fVec3{500.f, 500.f, 100.f}, "rocks"));
+    objects.push_back(new Tree(rule, generations));
+    render();
+}
+
+void usage(char*);
+
 int main(int argc, char *argv[])
 {
+	char *program = argv[0];
+    char *rule = nullptr;
+    int generations = 5;
+	for (++argv, --argc; argc > 0; ++argv, --argc) 
+	{
+		// help command skips to usage guide
+		if (strncmp(argv[0], "-h", 2) == 0 || strncmp(argv[0], "--h", 3) == 0)
+		{
+			usage(program);
+			return 1;
+		}
+
+		// parse options
+		if (argc > 1 && argv[0][0] == '-')
+		{
+			int len = strlen(++argv[0]);
+			for ( ; len > 0; ++argv[0], --len)
+			{
+				if (argv[0][0] == 'g') 
+				{
+					size_t digits;
+					try 
+					{
+						generations = stoi(std::string(argv[0] + 1), &digits);
+					}
+					catch (const std::invalid_argument&)
+					{
+						std::cerr << "Invalid number of generations.\n";
+						usage(program);
+						return 1;
+					}
+					if (generations < 0)
+					{
+						std::cerr << "Number of generations cannot be negative.\n";
+						return 1;
+					}
+					len -= digits;
+					argv[0] += digits;
+				}
+
+				else  
+				{
+					std::cerr << "Invalid option: " << argv[0][0] << '\n';
+					usage(program);
+					return 1;
+				}
+			}
+			continue;
+		}
+
+		// last argument is the rule 
+		if (argc == 1)
+		{
+			rule = argv[0];
+			continue;
+		}
+        usage(program);
+        return 1;
+	}
+	if (!rule || argc != 0)
+	{
+		usage(program);
+		return 1;
+	}
+
     // initialize windows and OpenGL
-    GLapp app;
+    GLapp app(rule, generations);
 
     // add some objects to draw
-    app.objects.push_back(new Plane(fVec3{500.f, 500.f, 100.f}, "rocks"));
-    app.objects.push_back(new Sphere(50, 25, fVec3{50.f,50.f,50.f}, "paving"));
 
     // set up initial viewport
     reshape(app.win, app.width, app.height);
@@ -260,4 +366,14 @@ int main(int argc, char *argv[])
     }
 
     return 0;
+}
+
+void usage(char *program) 
+{
+	std::cout << "Expected usage: " << program << " -[OPTIONS] rule.txt\n"
+		<< "\tOPTIONS:\n"
+		<< "\t\tg(number)\n"
+		<< "\t\t\tSets the number of generations equal to (number). If not specified, the program will use g = 5.\n"
+        << "\t\trule.txt" 
+        << "\t\t\tThis file contains the rule that the lystem will use to create the tree.\n";
 }

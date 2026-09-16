@@ -5,9 +5,10 @@
 
 LSystem::Settings LSystem::settings;
 
-LSystem::LSystem(std::string _filename)
+LSystem::LSystem(std::string _filename, int _generations)
 {
     std::ifstream file(_filename);
+    settings.generations = _generations;
     
     // first line contains start string
     std::getline(file, generated);
